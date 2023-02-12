@@ -49,8 +49,8 @@ const updateBoard = (scene: number[][], position: IPosition, value: number): num
 const updateBoardByShape = (scene: number[][], currentShape: IShape, position: IPosition): number[][] => {
     let updatedScene = scene.slice()
 
-    currentShape.shape.forEach((pos) => {
-        updatedScene = updateBoard(updatedScene, { x: pos.x + position.x, y: pos.y + position.y }, 1)
+    currentShape.shape.forEach((shapePos) => {
+        updatedScene = updateBoard(updatedScene, { x: shapePos.x + position.x, y: shapePos.y + position.y }, 1)
     })
 
     return updatedScene
@@ -77,6 +77,26 @@ export const useBoard = (): Board => {
             return false
         }
 
+    }
+    
+    const hardDrop = () => {
+        // move shape down until it collides
+        let updatedPosition = position
+        let hitBottom = false
+        while (!hitBottom) {
+            const newUpdatedPosition: IPosition = {
+                x: updatedPosition.x,
+                y: updatedPosition.y + 1
+            }
+
+            if (!validateMove(newUpdatedPosition)) {
+                hitBottom = true
+            } else {
+                updatedPosition = newUpdatedPosition
+            }
+        }
+
+        placeShape(updatedPosition)
     }
 
     const validateMove = (newPosition: IPosition): boolean => {
@@ -119,6 +139,9 @@ export const useBoard = (): Board => {
         case "ArrowDown":
             moveShape(0, 1)
             break
+        case "ArrowUp":
+            hardDrop()
+            break
         default:
             break
         }
@@ -133,8 +156,10 @@ export const useBoard = (): Board => {
         setBoard(updatedBoard)
     }
 
-    const placeShape = () => {
-        setScene(updateBoardByShape(scene, shape, position))
+    const placeShape = (newPosition: IPosition | undefined = undefined) => {
+        const positionToUse = newPosition || position
+
+        setScene(updateBoardByShape(scene, shape, positionToUse))
         setShape(O_SHAPE)
         setPosition({ x: 0, y: 0 })
     }
