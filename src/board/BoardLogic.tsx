@@ -10,8 +10,17 @@ interface IPosition {
     y: number
 }
 
+interface IShapeState {
+    1: IPosition[]
+    2: IPosition[]
+    3: IPosition[]
+    4: IPosition[]
+
+}
+
 interface IShape {
-    shape: Array<IPosition>
+    states: IShapeState
+    currentState: number
     width: number
     height: number
 }
@@ -35,10 +44,12 @@ const updateBoard = (scene: number[][], position: IPosition, value: number): num
 }
 
 
-const updateBoardByShape = (scene: number[][], currentShape: IShape, position: IPosition): number[][] => {
+const updateBoardByShape = (scene: number[][], shape: IShape, position: IPosition): number[][] => {
     let updatedScene = scene.slice()
 
-    currentShape.shape.forEach((shapePos) => {
+    const currentShape = shape.states[shape.currentState as keyof IShapeState]
+
+    currentShape.forEach((shapePos) => {
         updatedScene = updateBoard(updatedScene, { x: shapePos.x + position.x, y: shapePos.y + position.y }, 1)
     })
 
@@ -86,9 +97,26 @@ export const useBoard = (): Board => {
         placeShape(updatedPosition)
     }
 
-    const validateMove = (newPosition: IPosition): boolean => {
+    const rotateShape = (cw: boolean) => {
+        let newShapeState = shape.currentState
+
+        if (cw) {
+            newShapeState = newShapeState === 4 ? 1 : newShapeState + 1
+        } else {
+            newShapeState = newShapeState === 1 ? 4 : newShapeState - 1
+        }
+
+        if (validateMove(position, newShapeState)) {
+            setShape({ ...shape, currentState: newShapeState })
+        }
+    }
+
+    const validateMove = (newPosition: IPosition, newShapeState = 0): boolean => {
+        const targetShapeState = newShapeState === 0 ? shape.currentState : newShapeState
+        const currentShape = shape.states[targetShapeState as keyof IShapeState]
+
         // get absolute position of each block
-        const absoluteShape = shape.shape.map((pos) => {        
+        const absoluteShape = currentShape.map((pos) => {        
             return { x: pos.x + newPosition.x, y: pos.y + newPosition.y }
         })
 
@@ -128,6 +156,12 @@ export const useBoard = (): Board => {
             break
         case "ArrowUp":
             hardDrop()
+            break
+        case "s":
+            rotateShape(false)
+            break
+        case "f":
+            rotateShape(true)
             break
         default:
             break
