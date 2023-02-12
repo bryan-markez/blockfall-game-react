@@ -16,6 +16,8 @@ interface IShape {
     height: number
 }
 
+type Board = [number[][], (e: KeyboardEvent) => void, (e: KeyboardEvent) => void]
+
 const O_SHAPE: IShape = {
     shape: [
         { x: 0, y: 0 },
@@ -54,7 +56,7 @@ const updateBoardByShape = (scene: number[][], currentShape: IShape, position: I
     return updatedScene
 }
 
-export const useBoard = () => {
+export const useBoard = (): Board => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [scene, setScene] = useState<number[][]>(createEmptyScene())
     const [position, setPosition] = useState<IPosition>({ x: 0, y: 0 })
@@ -87,9 +89,9 @@ export const useBoard = () => {
         const outOfBounds = absoluteShape.some((pos) => {
             return pos.x < 0 || pos.x >= COL_COUNT || pos.y < 0 || pos.y >= ROW_COUNT
         })
-        console.log("outOfBounds", outOfBounds)
 
         if (outOfBounds) {
+            console.log("outOfBounds ", outOfBounds)
             return false
         }
 
@@ -103,6 +105,27 @@ export const useBoard = () => {
         }
 
         return true
+    }
+
+    const onKeyDown = (e: KeyboardEvent) => {
+        console.log("KeyDown: ", e)
+        switch (e.key) {
+        case "ArrowLeft":
+            moveShape(-1, 0)
+            break
+        case "ArrowRight":
+            moveShape(1, 0)
+            break
+        case "ArrowDown":
+            moveShape(0, 1)
+            break
+        default:
+            break
+        }
+    }
+
+    const onKeyUp = (e: KeyboardEvent) => {
+        console.log("KeyUp: ", e)
     }
 
     const updateBoardState = () => {
@@ -123,5 +146,5 @@ export const useBoard = () => {
     }, 600)
 
 
-    return [board]
+    return [board, onKeyDown, onKeyUp]
 }
