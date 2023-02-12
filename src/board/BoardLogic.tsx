@@ -133,6 +133,12 @@ export const useBoard = (): Board => {
         setBoard(updatedBoard)
     }
 
+    const placeShape = () => {
+        setScene(updateBoardByShape(scene, shape, position))
+        setShape(O_SHAPE)
+        setPosition({ x: 0, y: 0 })
+    }
+
     useEffect(updateBoardState, [scene, shape, position])
 
     // Piece falling loop
@@ -141,6 +147,7 @@ export const useBoard = (): Board => {
             console.log("move down")
         } else {
             console.log("cannove move down")
+            placeShape()
         }
 
     }, 600)
