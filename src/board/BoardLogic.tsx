@@ -142,6 +142,28 @@ export const useBoard = (): Board => {
         return true
     }
 
+    const lineClear = () => {
+        const updatedScene = scene.map((row) => { return row.slice() })
+        let didUpdate = false
+        // iterate through each row
+        for (let i = 0; i < scene.length; i++) {
+            const fullRow = scene[i].every((block) => { return block === 1 })
+
+            if (fullRow) {
+                // remove row
+                updatedScene.splice(i, 1)
+                // add empty row to top
+                updatedScene.unshift(new Array(COL_COUNT).fill(0))
+
+                didUpdate = true
+            }
+        }
+
+        if (didUpdate) {
+            setScene(updatedScene)
+        }
+    }
+
     const onKeyDown = (e: KeyboardEvent) => {
         console.log("KeyDown: ", e)
         switch (e.key) {
@@ -186,6 +208,7 @@ export const useBoard = (): Board => {
     }
 
     useEffect(updateBoardState, [scene, shape, position])
+    useEffect(lineClear, [scene])
 
     // Piece falling loop
     useInterval(() => {
