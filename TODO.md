@@ -1,0 +1,1 @@
+[] figure out where does the game logic go after setting up the HTML canvas :)
