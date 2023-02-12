@@ -15,7 +15,7 @@ const Game: React.FC<GameProps> = () => {
                 <h1>Game</h1>
             </div>
             <GameContainer>
-                <Stage width={800} height={600} options={{backgroundColor: "#FFFFFF"}}>
+                <Stage width={300} height={400} options={{backgroundColor: "#FFFFFF"}}>
                     <Board random={false}/>
                 </Stage>
             </GameContainer>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-
+import { randomShape } from "../shape/Shape"
 import { useInterval } from "../loop/Loop"
 
 export const ROW_COUNT = 20
@@ -17,17 +17,6 @@ interface IShape {
 }
 
 type Board = [number[][], (e: KeyboardEvent) => void, (e: KeyboardEvent) => void]
-
-const O_SHAPE: IShape = {
-    shape: [
-        { x: 0, y: 0 },
-        { x: 1, y: 0 },
-        { x: 0, y: 1 },
-        { x: 1, y: 1 },
-    ],
-    width: 2,
-    height: 2
-}
 
 const createEmptyScene = (): number[][] => {
     return Array.from(Array(ROW_COUNT), () => new Array(COL_COUNT).fill(0))
@@ -57,11 +46,9 @@ const updateBoardByShape = (scene: number[][], currentShape: IShape, position: I
 }
 
 export const useBoard = (): Board => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [scene, setScene] = useState<number[][]>(createEmptyScene())
     const [position, setPosition] = useState<IPosition>({ x: 0, y: 0 })
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [shape, setShape] = useState<IShape>(O_SHAPE)
+    const [shape, setShape] = useState<IShape>(randomShape())
     const [board, setBoard] = useState<number[][]>(updateBoardByShape(scene, shape, position))
 
     const moveShape = (x: number, y: number): boolean => {
@@ -160,7 +147,7 @@ export const useBoard = (): Board => {
         const positionToUse = newPosition || position
 
         setScene(updateBoardByShape(scene, shape, positionToUse))
-        setShape(O_SHAPE)
+        setShape(randomShape())
         setPosition({ x: 0, y: 0 })
     }
 
