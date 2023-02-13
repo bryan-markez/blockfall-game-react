@@ -23,6 +23,7 @@ interface IShape {
     currentState: number
     width: number
     height: number
+    value: number
 }
 
 type Board = [number[][], (e: KeyboardEvent) => void, (e: KeyboardEvent) => void]
@@ -50,7 +51,11 @@ const updateBoardByShape = (scene: number[][], shape: IShape, position: IPositio
     const currentShape = shape.states[shape.currentState as keyof IShapeState]
 
     currentShape.forEach((shapePos) => {
-        updatedScene = updateBoard(updatedScene, { x: shapePos.x + position.x, y: shapePos.y + position.y }, 1)
+        updatedScene = updateBoard(
+            updatedScene,
+            { x: shapePos.x + position.x, y: shapePos.y + position.y },
+            shape.value
+        )
     })
 
     return updatedScene
@@ -132,7 +137,7 @@ export const useBoard = (): Board => {
 
         // check if any block is colliding with another block
         const colliding = absoluteShape.some((pos) => {
-            return scene[pos.y][pos.x] === 1
+            return scene[pos.y][pos.x] > 0
         })
 
         if (colliding) {
@@ -147,7 +152,7 @@ export const useBoard = (): Board => {
         let didUpdate = false
         // iterate through each row
         for (let i = 0; i < scene.length; i++) {
-            const fullRow = scene[i].every((block) => { return block === 1 })
+            const fullRow = scene[i].every((block) => { return block > 0 })
 
             if (fullRow) {
                 // remove row
@@ -177,6 +182,18 @@ export const useBoard = (): Board => {
             moveShape(0, 1)
             break
         case "ArrowUp":
+            hardDrop()
+            break
+        case "l":
+            moveShape(-1, 0)
+            break
+        case "'":
+            moveShape(1, 0)
+            break
+        case ";":
+            moveShape(0, 1)
+            break
+        case "p":
             hardDrop()
             break
         case "s":

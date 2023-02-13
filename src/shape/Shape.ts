@@ -16,6 +16,7 @@ interface IShape {
     currentState: number
     width: number
     height: number
+    value: number
 }
 
 const O_SHAPE: IShape = {
@@ -47,7 +48,8 @@ const O_SHAPE: IShape = {
     },
     currentState: 1,
     width: 4,
-    height: 3
+    height: 3,
+    value: 1
 }
 
 const I_SHAPE: IShape = {
@@ -79,7 +81,8 @@ const I_SHAPE: IShape = {
     },
     currentState: 1,
     width: 4,
-    height: 4
+    height: 4,
+    value: 2
 }
 
 const L_SHAPE: IShape = {
@@ -111,7 +114,8 @@ const L_SHAPE: IShape = {
     },
     currentState: 1,
     width: 3,
-    height: 3
+    height: 3,
+    value: 3
 }
 
 const J_SHAPE: IShape = {
@@ -143,7 +147,8 @@ const J_SHAPE: IShape = {
     },
     currentState: 1,
     width: 3,
-    height: 3
+    height: 3,
+    value: 4
 }
 
 const S_SHAPE: IShape = {
@@ -175,7 +180,8 @@ const S_SHAPE: IShape = {
     },
     currentState: 1,
     width: 3,
-    height: 3
+    height: 3,
+    value: 5
 }
 
 const Z_SHAPE: IShape = {
@@ -207,7 +213,8 @@ const Z_SHAPE: IShape = {
     },
     currentState: 1,
     width: 3,
-    height: 3
+    height: 3,
+    value: 6
 }
 
 const T_SHAPE: IShape = {
@@ -239,7 +246,8 @@ const T_SHAPE: IShape = {
     },
     currentState: 1,
     width: 3,
-    height: 3
+    height: 3,
+    value: 7
 }
 
 const randomShape = (): IShape => {

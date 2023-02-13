@@ -85,13 +85,48 @@ const Row: React.FC<RowProps> = ({...props}) => {
 }
 
 const Block: React.FC<BlockProps> = ({...props}) => {
+    const pieceState = props.state
+    let color = 0xFFFFFF
+    switch (pieceState) {
+    case 1:
+        // yellow
+        color = 0xFFFF00
+        break
+    case 2:
+        // cyan
+        color = 0x00FFFF
+        break
+    case 3:
+        // blue
+        color = 0x0000FF
+        break
+    case 4:
+        // orange
+        color = 0xFFA500
+        break
+    case 5:
+        // green
+        color = 0x00FF00
+        break
+    case 6:
+        // red
+        color = 0xFF0000
+        break
+    case 7:
+        // purple
+        color = 0x800080
+        break
+    default:
+        break
+    }
+
 
     return (
         <Sprite 
             texture={PIXI.Texture.WHITE} 
             width={20} 
             height={20} 
-            tint={props.state === 0 ? 0xFFFFFF : 0xFFFF00}
+            tint={props.state === 0 ? 0xFFFFFF : color}
             alpha={props.state === 0 ? 0 : 0.8}
         />
     )
