@@ -1,23 +1,4 @@
-interface IPosition {
-    x: number
-    y: number
-}
-
-interface IShapeState {
-    1: IPosition[]
-    2: IPosition[]
-    3: IPosition[]
-    4: IPosition[]
-
-}
-
-interface IShape {
-    states: IShapeState
-    currentState: number
-    width: number
-    height: number
-    value: number
-}
+import { IShape } from "./Shape.interfaces"
 
 const O_SHAPE: IShape = {
     states: {
