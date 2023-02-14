@@ -1,33 +1,15 @@
 import { useEffect, useState } from "react"
-import { randomShape } from "../shape/Shape"
-import { useInterval } from "../loop/Loop"
+import { randomShape } from "./shape/Shape"
+
+import { IShape, IShapeState } from "./shape/Shape.interfaces"
+import { IPosition } from "./Board.interfaces"
 
 export const ROW_COUNT = 20
 export const COL_COUNT = 10
 
-interface IPosition {
-    x: number
-    y: number
-}
-
-interface IShapeState {
-    1: IPosition[]
-    2: IPosition[]
-    3: IPosition[]
-    4: IPosition[]
-
-}
-
-interface IShape {
-    states: IShapeState
-    currentState: number
-    width: number
-    height: number
-    value: number
-}
-
 type Board = [number[][], (e: KeyboardEvent) => void, (e: KeyboardEvent) => void]
 
+// Scene manipulation
 const createEmptyScene = (): number[][] => {
     return Array.from(Array(ROW_COUNT), () => new Array(COL_COUNT).fill(0))
 }
@@ -61,12 +43,13 @@ const updateBoardByShape = (scene: number[][], shape: IShape, position: IPositio
     return updatedScene
 }
 
-export const useBoard = (): Board => {
+export const useBoardLogic = (): Board => {
     const [scene, setScene] = useState<number[][]>(createEmptyScene())
     const [position, setPosition] = useState<IPosition>({ x: 0, y: 0 })
     const [shape, setShape] = useState<IShape>(randomShape())
     const [board, setBoard] = useState<number[][]>(updateBoardByShape(scene, shape, position))
 
+    // Piece movement and manipulations
     const moveShape = (x: number, y: number): boolean => {
         const updatedPosition: IPosition = {
             x: position.x + x,
@@ -147,6 +130,7 @@ export const useBoard = (): Board => {
         return true
     }
 
+    // Additional board manipulation
     const lineClear = () => {
         const updatedScene = scene.map((row) => { return row.slice() })
         let didUpdate = false
@@ -169,6 +153,21 @@ export const useBoard = (): Board => {
         }
     }
 
+    const updateBoardState = () => {
+        const updatedBoard = updateBoardByShape(scene, shape, position)
+        setBoard(updatedBoard)
+    }
+
+    const placeShape = (newPosition: IPosition | undefined = undefined) => {
+        const positionToUse = newPosition || position
+
+        setScene(updateBoardByShape(scene, shape, positionToUse))
+        setShape(randomShape())
+        setPosition({ x: 0, y: 0 })
+    }
+
+    // TODO left, right, down, hardrop, spin, spin ccw, Other file set keybindings, do some more abstraction
+    // Keyboard Inputs
     const onKeyDown = (e: KeyboardEvent) => {
         console.log("KeyDown: ", e)
         switch (e.key) {
@@ -182,6 +181,7 @@ export const useBoard = (): Board => {
             moveShape(0, 1)
             break
         case "ArrowUp":
+        case " ":
             hardDrop()
             break
         case "l":
@@ -211,33 +211,22 @@ export const useBoard = (): Board => {
         console.log("KeyUp: ", e)
     }
 
-    const updateBoardState = () => {
-        const updatedBoard = updateBoardByShape(scene, shape, position)
-        setBoard(updatedBoard)
-    }
-
-    const placeShape = (newPosition: IPosition | undefined = undefined) => {
-        const positionToUse = newPosition || position
-
-        setScene(updateBoardByShape(scene, shape, positionToUse))
-        setShape(randomShape())
-        setPosition({ x: 0, y: 0 })
-    }
-
     useEffect(updateBoardState, [scene, shape, position])
     useEffect(lineClear, [scene])
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (moveShape(0, 1)) {
+                console.log("move down")
+            } else {
+                console.log("cannot move down")
+                placeShape()
+            }
+        }, 600)
 
-    // Piece falling loop
-    useInterval(() => {
-        if (moveShape(0, 1)) {
-            console.log("move down")
-        } else {
-            console.log("cannove move down")
-            placeShape()
+        return () => {
+            clearInterval(interval)
         }
-
-    }, 600)
-
+    }, [board])
 
     return [board, onKeyDown, onKeyUp]
 }

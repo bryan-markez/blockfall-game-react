@@ -1,30 +1,13 @@
 /* eslint-disable react/jsx-key */
 import React, { memo, useCallback, useEffect } from "react"
-import { useBoard, ROW_COUNT, COL_COUNT } from "./BoardLogic"
+import { useBoardLogic, ROW_COUNT, COL_COUNT } from "./BoardLogic"
 import { Container, Graphics, Sprite } from "@pixi/react"
 import * as PIXI from "pixi.js"
 
+import { IBoardProps, IBoardGrid, IRowProps, IBlockProps } from "./Board.interfaces"
 
-interface BoardProps {
-    random: boolean
-}
-
-interface IBoardGrid {
-    rows: number
-    cols: number
-}
-
-interface RowProps {
-    row: number[]
-    rowIndex: number
-}
-
-interface BlockProps {
-    state: number
-}
-
-const Board: React.FC<BoardProps> = () => {
-    const [board, onKeyDown, onKeyUp] = useBoard()
+const Board: React.FC<IBoardProps> = () => {
+    const [board, onKeyDown, onKeyUp] = useBoardLogic()
 
     useEffect(() => {
         window.addEventListener("keydown", onKeyDown)
@@ -35,8 +18,6 @@ const Board: React.FC<BoardProps> = () => {
             window.removeEventListener("keyup", onKeyUp)
         }
     }, [onKeyDown, onKeyUp])
-    
-
 
     return (
         <Container position={[0, 0]}>
@@ -50,13 +31,10 @@ const Board: React.FC<BoardProps> = () => {
     )
 }
 
-const BoardGrid: React.FC<IBoardGrid> = memo(({...props}) => {
+const BoardGrid: React.FC<IBoardGrid> = memo(({...props}: IBoardGrid) => {
     const drawGrid = useCallback((g: PIXI.Graphics) => {
         g.clear()
-        // TODO figure out what actually is react/prop-types
-        // eslint-disable-next-line react/prop-types
         for (let y = 0; y < props.rows; y++) {
-            // eslint-disable-next-line react/prop-types
             for (let x = 0; x < props.cols; x++) {
                 g.lineStyle(1, 0x000000, 1)
                 g.drawRect(x * 20, y * 20, 20, 20)
@@ -70,7 +48,7 @@ const BoardGrid: React.FC<IBoardGrid> = memo(({...props}) => {
 })
 BoardGrid.displayName = "BoardGrid"
 
-const Row: React.FC<RowProps> = ({...props}) => {
+const Row: React.FC<IRowProps> = ({...props}) => {
     return (
         <>
             {props.row.map((state, col) => {
@@ -84,7 +62,7 @@ const Row: React.FC<RowProps> = ({...props}) => {
     )
 }
 
-const Block: React.FC<BlockProps> = ({...props}) => {
+const Block: React.FC<IBlockProps> = ({...props}) => {
     const pieceState = props.state
     let color = 0xFFFFFF
     switch (pieceState) {
