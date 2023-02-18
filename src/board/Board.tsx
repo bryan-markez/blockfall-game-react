@@ -1,23 +1,14 @@
 /* eslint-disable react/jsx-key */
 import React, { memo, useCallback, useEffect } from "react"
-import { useBoardLogic, ROW_COUNT, COL_COUNT } from "./BoardLogic"
+// import { useBoardLogic, ROW_COUNT, COL_COUNT } from "./BoardLogic"
+import { useBoard, ROW_COUNT, COL_COUNT } from "./useBoard"
 import { Container, Graphics, Sprite } from "@pixi/react"
 import * as PIXI from "pixi.js"
 
-import { IBoardProps, IBoardGrid, IRowProps, IBlockProps } from "./Board.interfaces"
+import { IBoardGrid, IRowProps, IBlockProps } from "./Board.interfaces"
 
-const Board: React.FC<IBoardProps> = () => {
-    const [board, onKeyDown, onKeyUp] = useBoardLogic()
-
-    useEffect(() => {
-        window.addEventListener("keydown", onKeyDown)
-        window.addEventListener("keyup", onKeyUp)
-    
-        return () => {
-            window.removeEventListener("keydown", onKeyDown)
-            window.removeEventListener("keyup", onKeyUp)
-        }
-    }, [onKeyDown, onKeyUp])
+const Board = (): JSX.Element => {
+    const [board] = useBoard()
 
     return (
         <Container position={[0, 0]}>

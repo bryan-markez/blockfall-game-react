@@ -5,18 +5,23 @@ interface IShapeState {
     2: IPosition[]
     3: IPosition[]
     4: IPosition[]
-
 }
 
 interface IShape {
     states: IShapeState
-    currentState: number
     width: number
     height: number
     value: number
 }
 
+interface IShapePosition {
+    shape: IShape
+    state: number
+    position: IPosition
+}
+
 export type {
     IShape,
-    IShapeState
+    IShapeState,
+    IShapePosition
 }

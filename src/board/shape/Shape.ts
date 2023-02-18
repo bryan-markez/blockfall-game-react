@@ -27,7 +27,6 @@ const O_SHAPE: IShape = {
             { x: 2, y: 1 }
         ]
     },
-    currentState: 1,
     width: 4,
     height: 3,
     value: 1
@@ -60,7 +59,6 @@ const I_SHAPE: IShape = {
             { x: 1, y: 3 }
         ]
     },
-    currentState: 1,
     width: 4,
     height: 4,
     value: 2
@@ -93,7 +91,6 @@ const L_SHAPE: IShape = {
             { x: 0, y: 2 }
         ]
     },
-    currentState: 1,
     width: 3,
     height: 3,
     value: 3
@@ -126,7 +123,6 @@ const J_SHAPE: IShape = {
             { x: 1, y: 2 }
         ]
     },
-    currentState: 1,
     width: 3,
     height: 3,
     value: 4
@@ -159,7 +155,6 @@ const S_SHAPE: IShape = {
             { x: 1, y: 2 }
         ]
     },
-    currentState: 1,
     width: 3,
     height: 3,
     value: 5
@@ -192,7 +187,6 @@ const Z_SHAPE: IShape = {
             { x: 1, y: 0 }
         ]
     },
-    currentState: 1,
     width: 3,
     height: 3,
     value: 6
@@ -225,7 +219,6 @@ const T_SHAPE: IShape = {
             { x: 0, y: 1 }
         ]
     },
-    currentState: 1,
     width: 3,
     height: 3,
     value: 7

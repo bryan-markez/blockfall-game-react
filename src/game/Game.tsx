@@ -4,19 +4,19 @@ import { GameContainer } from "./Game.styles"
 import { Stage } from "@pixi/react"
 
 
-interface GameProps {
-    random: boolean
-}
+const Game = (): JSX.Element => {
+    /*
+        Maybe in here we can set up the main menu, and then have a button to start the game?
+    */
 
-const Game: React.FC<GameProps> = () => {
     return (
         <>
             <div>
                 <h1>Game</h1>
             </div>
             <GameContainer>
-                <Stage width={300} height={400} options={{backgroundColor: "#FFFFFF"}}>
-                    <Board random={false}/>
+                <Stage width={800} height={600} options={{backgroundColor: "#ffffff"}}>
+                    <Board />
                 </Stage>
             </GameContainer>
         </>
