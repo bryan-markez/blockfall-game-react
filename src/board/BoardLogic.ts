@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { randomShape } from "./shape/Shape"
+import { useShape } from "./shape/useShape"
 
 import { IShape, IShapeState } from "./shape/Shape.interfaces"
 import { IPosition } from "./Board.interfaces"
@@ -7,7 +8,7 @@ import { IPosition } from "./Board.interfaces"
 export const ROW_COUNT = 20
 export const COL_COUNT = 10
 
-type Board = [number[][], (e: KeyboardEvent) => void, (e: KeyboardEvent) => void]
+type Board = [number[][]]
 
 // Scene manipulation
 const createEmptyScene = (): number[][] => {
@@ -45,8 +46,7 @@ const updateBoardByShape = (scene: number[][], shape: IShape, position: IPositio
 
 export const useBoardLogic = (): Board => {
     const [scene, setScene] = useState<number[][]>(createEmptyScene())
-    const [position, setPosition] = useState<IPosition>({ x: 0, y: 0 })
-    const [shape, setShape] = useState<IShape>(randomShape())
+    const [shape, moveShape, rotateShape, resetShape] = useShape()
     const [board, setBoard] = useState<number[][]>(updateBoardByShape(scene, shape, position))
 
     // Piece movement and manipulations
@@ -216,9 +216,9 @@ export const useBoardLogic = (): Board => {
     useEffect(() => {
         const interval = setInterval(() => {
             if (moveShape(0, 1)) {
-                console.log("move down")
+                // console.log("move down")
             } else {
-                console.log("cannot move down")
+                // console.log("cannot move down")
                 placeShape()
             }
         }, 600)
@@ -228,5 +228,16 @@ export const useBoardLogic = (): Board => {
         }
     }, [board])
 
-    return [board, onKeyDown, onKeyUp]
+    useEffect(() => {
+        window.addEventListener("keydown", onKeyDown)
+        window.addEventListener("keyup", onKeyUp)
+    
+        return () => {
+            console.log("unmounting")
+            window.removeEventListener("keydown", onKeyDown)
+            window.removeEventListener("keyup", onKeyUp)
+        }
+    }, [onKeyDown, onKeyUp])
+
+    return [board]
 }
