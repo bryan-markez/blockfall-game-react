@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { useShape } from "./shape/useShape"
+import { useLoop } from "./useLoop"
 import { IShapePosition, IShapeState } from "./shape/Shape.interfaces"
 import { IPosition } from "./Board.interfaces"
 
@@ -7,7 +8,8 @@ export const ROW_COUNT = 20
 export const COL_COUNT = 10
 
 const createEmptyBoard = (x: number, y: number): number[][] => {
-    return Array.from(Array(x), () => new Array(y).fill(0))
+    const board: number[][] = Array.from(Array(x), () => new Array(y).fill(0))
+    return board
 }
 
 export const useBoard = () => {
@@ -15,34 +17,8 @@ export const useBoard = () => {
     const [placeShapeFlag, setPlaceShapeFlag] = useState<boolean>(false) // used to trigger the placement of a new shape
     const [shape, oldShape, moveShape, rotateShape, getNewShape] = useShape()
 
-    const updateBoard = (newShape: IShapePosition) => {
-        const updatedBoard: number[][] = structuredClone(board)
-
-        // need the current shape in order to clean up the board
-        if (!placeShapeFlag) {
-            if (oldShape) {
-                const currentShapeValues = oldShape.shape.states[oldShape.state as keyof IShapeState]
-
-                currentShapeValues?.forEach((shapePos) => {
-                    updatedBoard[shapePos.y + oldShape.position.y][shapePos.x + oldShape.position.x] = 0
-                })
-            }
-        } else {
-            setPlaceShapeFlag(false)
-        }
-
-
-        const newShapeValues = newShape.shape.states[newShape.state as keyof IShapeState]
-
-        newShapeValues.forEach((shapePos) => {
-            updatedBoard[shapePos.y + newShape.position.y][shapePos.x + newShape.position.x] = newShape.shape.value
-        })
-
-        setBoard(updatedBoard)
-    }
-
     // validate the next move
-    const validateMove = (pos: IPosition): boolean => {
+    const validateMove = (movePos: IPosition): boolean => {
         let validMoveFlag = true
         const updatedBoardPreview: number[][] = structuredClone(board)
 
@@ -56,11 +32,47 @@ export const useBoard = () => {
         })
 
         const newShapePosition = currentShape.position
-        newShapePosition.x += pos.x
-        newShapePosition.y += pos.y
+        newShapePosition.x += movePos.x
+        newShapePosition.y += movePos.y
 
 
         for (const shapePos of currentShapeValues) {
+            const x = shapePos.x + newShapePosition.x
+            const y = shapePos.y + newShapePosition.y
+
+            if (x < 0 || y < 0 || x >= COL_COUNT || y >= ROW_COUNT) {
+                validMoveFlag = false
+                break
+            }
+
+            if (updatedBoardPreview[y][x] !== 0) {
+                validMoveFlag = false
+                break
+            }
+        }
+
+        return validMoveFlag
+    }
+
+    const validateRotation = (ccw = false): boolean => {
+        let validMoveFlag = true
+        const updatedBoardPreview: number[][] = structuredClone(board)
+
+        // need the current shape in order to clean up the board
+        const currentShape: IShapePosition = structuredClone(shape)
+
+        const currentShapeValues = currentShape.shape.states[currentShape.state as keyof IShapeState]
+
+        currentShapeValues.forEach((shapePos) => {
+            updatedBoardPreview[shapePos.y + currentShape.position.y][shapePos.x + currentShape.position.x] = 0
+        })
+
+        const newShapePosition = currentShape.position
+
+        const newShapeState = ccw ? (currentShape.state === 1 ? 4 : currentShape.state - 1) : (currentShape.state === 4 ? 1 : currentShape.state + 1)
+        const newShapeValues = currentShape.shape.states[newShapeState as keyof IShapeState]
+        
+        for (const shapePos of newShapeValues) {
             const x = shapePos.x + newShapePosition.x
             const y = shapePos.y + newShapePosition.y
 
@@ -89,8 +101,33 @@ export const useBoard = () => {
         return flag
     }
 
+    const tryRotate = (ccw = false) => {
+        let flag = false
+
+        if (validateRotation(ccw)) {
+            rotateShape(ccw)
+            flag = true
+        }
+
+        return flag
+    }
+
     const hardDrop = () => {
-        console.log("hard drop")
+        const newMovePos = {x: 0, y: 0}
+
+        while (validateMove(newMovePos)) {
+            newMovePos.y++
+        }
+
+        const finalPos = {x: newMovePos.x + shape.position.x, y: shape.position.y + newMovePos.y - 1 }
+        console.log("finalPos ", finalPos)
+
+        // TODO this is super hacking pls improve
+        const updatedBoardRes = updateBoard(board, {...shape}, {cleanUp: true, updateImmediately: false})
+        updateBoard(updatedBoardRes, {...shape, position: {x: finalPos.x, y: finalPos.y}}, {cleanUp: false, updateImmediately: true})
+
+        getNewShape()
+
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -122,10 +159,10 @@ export const useBoard = () => {
             hardDrop()
             break
         case "s":
-            rotateShape(true)
+            tryRotate(true)
             break
         case "f":
-            rotateShape(false)
+            tryRotate(false)
             break
         default:
             break
@@ -136,30 +173,61 @@ export const useBoard = () => {
         console.log("KeyUp: ", e)
     }
 
-    useEffect(() => {
-        console.log(shape.position)
-        updateBoard(shape)
+    type IUpdateBoardOptions = {
+        cleanUp: boolean
+        updateImmediately: boolean
+    }
 
-        return () => {}
+    const updateBoard = (incomingBoard: number[][], incomingShape: IShapePosition, opts: IUpdateBoardOptions) => {
+        const { cleanUp, updateImmediately } = opts
+
+        // making a full clone for safety, would need to evaluate if this is causing performance issues later
+        const updatedBoard: number[][] = structuredClone(incomingBoard)
+        const updatedShape: IShapePosition = structuredClone(incomingShape)
+
+        const updatedShapeValues = updatedShape.shape.states[updatedShape.state as keyof IShapeState]
+
+        updatedShapeValues.forEach((shapePos) => {
+            updatedBoard[shapePos.y + updatedShape.position.y][shapePos.x + updatedShape.position.x] = (cleanUp) ? 0 : updatedShape.shape.value
+        })
+
+        if (updateImmediately) {
+            setBoard(updatedBoard)
+        }
+
+        return updatedBoard
+    }
+
+    // main game loop
+    useEffect(() => {
+        let updatedBoard: number[][] = structuredClone(board)
+        const updatedShape: IShapePosition = structuredClone(shape)
+
+        // place shape flag is used to disable the erasure of the previous shape
+        if (placeShapeFlag) {
+            setPlaceShapeFlag(false)
+        } else {
+            if (oldShape) {
+                updatedBoard = updateBoard(updatedBoard, oldShape, {cleanUp: true, updateImmediately: false})
+            }
+        }
+
+
+        updateBoard(updatedBoard, updatedShape, {cleanUp: false, updateImmediately: true})
     }, [shape])
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            // check if the shape can still move down
-            console.log('hit')
-            if (tryMove(0, 1)) {
-                console.log("move down")
-            }
-            else {
-                setPlaceShapeFlag(true)
-                getNewShape()
-            }
-        }, 600)
-
-        return () => {
-            clearInterval(interval)
+    // in game timer (piece gravity)
+    const gravityLoop = useCallback(() => {
+        // check if the shape can still move down
+        if (tryMove(0, 1)) {
+            console.log("move down")
         }
-    }, [board])
+        else {
+            setPlaceShapeFlag(true)
+            getNewShape()
+        }
+
+    }, [tryMove, setPlaceShapeFlag, getNewShape])
 
     useEffect(() => {
         window.addEventListener("keydown", onKeyDown)
@@ -170,7 +238,8 @@ export const useBoard = () => {
             window.removeEventListener("keyup", onKeyUp)
         }
     }, [onKeyDown, onKeyUp])
-    
 
-    return [board]
+    useLoop(gravityLoop, 600)
+
+    return [board] as const
 }
