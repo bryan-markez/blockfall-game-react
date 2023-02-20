@@ -238,6 +238,35 @@ const randomShape = (): IShape => {
     return shapes[Math.floor(Math.random() * shapes.length)]
 }
 
+const getRandomBag = (initialShape: IShape|null = null): IShape[] => {
+    const bag = [
+        O_SHAPE,
+        I_SHAPE,
+        L_SHAPE,
+        J_SHAPE,
+        S_SHAPE,
+        Z_SHAPE,
+        T_SHAPE
+    ]
+
+    for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]]
+    }
+
+    if (initialShape) {
+        for (let i = 0; i < bag.length; i++) {
+            const currentShape = bag[i]
+            if (currentShape.value === initialShape.value) {
+                bag.splice(i, 1)
+                break
+            }
+        }
+    }
+
+    return bag
+}
+
 export {
     O_SHAPE,
     I_SHAPE,
@@ -246,5 +275,6 @@ export {
     S_SHAPE,
     Z_SHAPE,
     T_SHAPE,
-    randomShape
+    randomShape,
+    getRandomBag
 }

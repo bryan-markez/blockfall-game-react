@@ -131,7 +131,7 @@ export const useBoard = () => {
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
-        console.log("KeyDown: ", e)
+        // console.log("KeyDown: ", e)
         switch (e.key) {
         case "ArrowLeft":
             tryMove(-1, 0)
@@ -170,7 +170,7 @@ export const useBoard = () => {
     }
 
     const onKeyUp = (e: KeyboardEvent) => {
-        console.log("KeyUp: ", e)
+        // console.log("KeyUp: ", e)
     }
 
     type IUpdateBoardOptions = {

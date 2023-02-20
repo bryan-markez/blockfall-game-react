@@ -1,12 +1,25 @@
 import React, { useState } from "react"
 import { randomShape } from "./Shape"
-import { IShapePosition } from "./Shape.interfaces"
+import { IShapePosition, IShape } from "./Shape.interfaces"
+import { useBag } from "./useBag"
+
 
 export const useShape = () => {
-    const [shape, setShape] = useState<IShapePosition>({shape: randomShape(), position: {x: 3, y: 0}, state: 1})
     const [oldShape, setOldShape] = useState<IShapePosition|null>(null)
+    const [shape, setShape] = useState<IShapePosition>({shape: randomShape(), position: {x: 3, y: 0}, state: 1})
+    const [savedBag] = useBag(shape.shape)
 
-    // TODO implement 7 bag randomizer
+    const takeFromBag = (): IShape => {
+        const newShape = savedBag.current[0]
+        savedBag.current = savedBag.current.slice(1)
+
+        return newShape
+    }
+
+    const getNewShape = () => {
+        setOldShape(null)
+        setShape({shape: takeFromBag(), position: {x: 3, y: 0}, state: 1})
+    }
 
     const moveShape = (x: number, y: number) => {
         setOldShape(structuredClone(shape))
@@ -20,11 +33,6 @@ export const useShape = () => {
         } else {
             setShape({ ...shape, state: shape.state === 4 ? 1 : shape.state + 1 })
         }
-    }
-
-    const getNewShape = () => {
-        setOldShape(null)
-        setShape({shape: randomShape(), position: {x: 3, y: 0}, state: 1})
     }
 
     return [shape, oldShape, moveShape, rotateShape, getNewShape] as const
