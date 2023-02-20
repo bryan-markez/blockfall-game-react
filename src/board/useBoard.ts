@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react"
 import { useShape } from "./shape/useShape"
 import { useLoop } from "./useLoop"
+import { useKey } from "./device/useKeyboard"
 import { IShapePosition, IShapeState } from "./shape/Shape.interfaces"
 import { IPosition } from "./Board.interfaces"
 
@@ -227,49 +228,6 @@ export const useBoard = (gameId: number) => {
         placeShape(currentBoard, updatedShape, {shapesToClean: [currentShape], spawnNewShape: true, lockShape: true})
     }
 
-    const onKeyDown = (e: KeyboardEvent) => {
-        // console.log("KeyDown: ", e)
-        switch (e.key) {
-        case "ArrowLeft":
-            tryMove(-1, 0)
-            break
-        case "ArrowRight":
-            tryMove(1, 0)
-            break
-        case "ArrowDown":
-            tryMove(0, 1)
-            break
-        case "ArrowUp":
-        case " ":
-            hardDrop()
-            break
-        case "l":
-            tryMove(-1, 0)
-            break
-        case "'":
-            tryMove(1, 0)
-            break
-        case ";":
-            tryMove(0, 1)
-            break
-        case "p":
-            hardDrop()
-            break
-        case "s":
-            tryRotate(true)
-            break
-        case "f":
-            tryRotate(false)
-            break
-        default:
-            break
-        }
-    }
-
-    const onKeyUp = (e: KeyboardEvent) => {
-        // console.log("KeyUp: ", e)
-    }
-
     // in game timer (piece gravity)
     const gravityLoop = useCallback(() => {
         // check if the shape can still move down
@@ -283,6 +241,18 @@ export const useBoard = (gameId: number) => {
 
     }, [tryMove, getNewShape, gameOverFlag])
 
+    useKey(tryMove, "ArrowLeft", [-1, 0])
+    useKey(tryMove, "ArrowRight", [1, 0])
+    useKey(tryMove, "ArrowDown", [0, 1])
+    useKey(tryMove, "ArrowUp", [0, -1])
+    useKey(hardDrop, " ")
+    useKey(tryRotate, "s", [true])
+    useKey(tryRotate, "f", [false])
+    useKey(tryMove, "l", [-1, 0])
+    useKey(tryMove, "'", [1, 0])
+    useKey(tryMove, ";", [0, 1])
+    useKey(hardDrop, "p")
+
     useEffect(() => {
         if (gameOverFlag) {
             const newBoard = createEmptyBoard(ROW_COUNT, COL_COUNT)
@@ -290,16 +260,6 @@ export const useBoard = (gameId: number) => {
             setGameOver(false)
         }
     }, [gameOverFlag])
-
-    useEffect(() => {
-        window.addEventListener("keydown", onKeyDown)
-        window.addEventListener("keyup", onKeyUp)
-    
-        return () => {
-            window.removeEventListener("keydown", onKeyDown)
-            window.removeEventListener("keyup", onKeyUp)
-        }
-    }, [onKeyDown, onKeyUp])
 
     useLoop(gravityLoop, 600)
 
