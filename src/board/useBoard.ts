@@ -12,10 +12,37 @@ const createEmptyBoard = (x: number, y: number): number[][] => {
     return board
 }
 
-export const useBoard = () => {
+export const useBoard = (gameId: number) => {
     const [board, setBoard] = useState<number[][]>(createEmptyBoard(ROW_COUNT, COL_COUNT))
-    const [placeShapeFlag, setPlaceShapeFlag] = useState<boolean>(false) // used to trigger the placement of a new shape
-    const [shape, oldShape, moveShape, rotateShape, getNewShape] = useShape()
+    const [shape, moveShape, rotateShape, getNewShape, resetShape] = useShape()
+    const [gameOverFlag, setGameOver] = useState<boolean>(false)
+
+    const validatePlacement = (spawnedShape: IShapePosition, boardPreview?: [][]): boolean => {
+        let validMoveFlag = true
+        // todo not used for not but it might be useful for later
+        const updatedBoardPreview: number[][] = structuredClone((boardPreview) ? boardPreview : board)
+        const spawnedShapedPreview: IShapePosition = structuredClone(spawnedShape)
+
+        const currentShapeValues = spawnedShapedPreview.shape.states[spawnedShapedPreview.state as keyof IShapeState]
+
+        for (const shapePos of currentShapeValues) {
+            const x = shapePos.x + spawnedShapedPreview.position.x
+            const y = shapePos.y + spawnedShapedPreview.position.y
+
+            if (x < 0 || y < 0 || x >= COL_COUNT || y >= ROW_COUNT) {
+                validMoveFlag = false
+                break
+            }
+
+            // check if board is occupied in the first 2 rows
+            if (y < 2) {
+                validMoveFlag = false
+                break
+            }
+        }
+
+        return validMoveFlag
+    }
 
     // validate the next move
     const validateMove = (movePos: IPosition): boolean => {
@@ -94,7 +121,9 @@ export const useBoard = () => {
         let flag = false
 
         if (validateMove({x, y})) {
-            moveShape(x, y)
+            const newShape = moveShape(x, y)
+            placeShape(board, newShape, {shapesToClean: [shape]})
+
             flag = true
         }
 
@@ -105,29 +134,97 @@ export const useBoard = () => {
         let flag = false
 
         if (validateRotation(ccw)) {
-            rotateShape(ccw)
+            const newShape = rotateShape(ccw)
+            placeShape(board, newShape, {shapesToClean: [shape]})
             flag = true
         }
 
         return flag
     }
 
-    const hardDrop = () => {
-        const newMovePos = {x: 0, y: 0}
+    type IUpdateBoardOptions = {
+        cleanUp: boolean
+        updateImmediately: boolean
+    }
 
+    const updateBoard = (incomingBoard: number[][], incomingShape: IShapePosition | null, opts: IUpdateBoardOptions) => {
+        const { cleanUp, updateImmediately } = opts
+
+        // making a full clone for safety, would need to evaluate if this is causing performance issues later
+        const updatedBoard: number[][] = structuredClone(incomingBoard)
+        const updatedShape: IShapePosition = structuredClone(incomingShape)
+
+        if (updatedShape === null) {
+            return updatedBoard
+        }
+
+        const updatedShapeValues = updatedShape.shape.states[updatedShape.state as keyof IShapeState]
+
+        updatedShapeValues.forEach((shapePos) => {
+            updatedBoard[shapePos.y + updatedShape.position.y][shapePos.x + updatedShape.position.x] = (cleanUp) ? 0 : updatedShape.shape.value
+        })
+
+        if (updateImmediately) {
+            setBoard(updatedBoard)
+        }
+
+        return updatedBoard
+    }
+
+    type IPlaceShapeOptions = {
+        shapesToClean?: IShapePosition[]
+        spawnNewShape?: boolean
+        lockShape?: boolean
+    }
+
+    const placeShape = (board: number[][], shape: IShapePosition, opts: IPlaceShapeOptions = {}): number[][] => {
+        const shapesToClean: IShapePosition[] | undefined = opts.shapesToClean
+        const spawnNewShape: boolean | undefined = opts.spawnNewShape
+        const lockedShape: boolean | undefined = opts.lockShape
+
+        let updatedBoard = structuredClone(board)
+
+        if (shapesToClean && shapesToClean.length > 0) {
+            shapesToClean.forEach((shapeToClean) => {
+                updatedBoard = updateBoard(updatedBoard, shapeToClean, {cleanUp: true, updateImmediately: false})
+            })
+        }
+
+        if (lockedShape) {
+            if (validatePlacement(shape, updatedBoard)) {
+                updatedBoard = updateBoard(updatedBoard, shape, {cleanUp: false, updateImmediately: true})
+            } else {
+                setGameOver(true)
+                return updatedBoard
+            }
+        } else {
+            updatedBoard = updateBoard(updatedBoard, shape, {cleanUp: false, updateImmediately: true})
+
+        }
+
+        if (spawnNewShape) {
+            const newShape = getNewShape()
+            updatedBoard = updateBoard(updatedBoard, newShape, {cleanUp: false, updateImmediately: true})
+        }
+
+        return updatedBoard
+    }
+
+    const hardDrop = () => {
+        const currentBoard = structuredClone(board)
+        const currentShape = structuredClone(shape)
+
+        const newMovePos = {x: 0, y: 0}
         while (validateMove(newMovePos)) {
             newMovePos.y++
         }
 
-        const finalPos = {x: newMovePos.x + shape.position.x, y: shape.position.y + newMovePos.y - 1 }
-        console.log("finalPos ", finalPos)
-
-        // TODO this is super hacking pls improve
-        const updatedBoardRes = updateBoard(board, {...shape}, {cleanUp: true, updateImmediately: false})
-        updateBoard(updatedBoardRes, {...shape, position: {x: finalPos.x, y: finalPos.y}}, {cleanUp: false, updateImmediately: true})
-
-        getNewShape()
-
+        const updatedShape = {...currentShape, position: {
+            x: newMovePos.x + currentShape.position.x,
+            y: currentShape.position.y + newMovePos.y - 1
+        }}
+        
+        placeShape(currentBoard, updatedShape, {shapesToClean: [currentShape], spawnNewShape: true, lockShape: true})
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -173,61 +270,26 @@ export const useBoard = () => {
         // console.log("KeyUp: ", e)
     }
 
-    type IUpdateBoardOptions = {
-        cleanUp: boolean
-        updateImmediately: boolean
-    }
-
-    const updateBoard = (incomingBoard: number[][], incomingShape: IShapePosition, opts: IUpdateBoardOptions) => {
-        const { cleanUp, updateImmediately } = opts
-
-        // making a full clone for safety, would need to evaluate if this is causing performance issues later
-        const updatedBoard: number[][] = structuredClone(incomingBoard)
-        const updatedShape: IShapePosition = structuredClone(incomingShape)
-
-        const updatedShapeValues = updatedShape.shape.states[updatedShape.state as keyof IShapeState]
-
-        updatedShapeValues.forEach((shapePos) => {
-            updatedBoard[shapePos.y + updatedShape.position.y][shapePos.x + updatedShape.position.x] = (cleanUp) ? 0 : updatedShape.shape.value
-        })
-
-        if (updateImmediately) {
-            setBoard(updatedBoard)
-        }
-
-        return updatedBoard
-    }
-
-    // main game loop
-    useEffect(() => {
-        let updatedBoard: number[][] = structuredClone(board)
-        const updatedShape: IShapePosition = structuredClone(shape)
-
-        // place shape flag is used to disable the erasure of the previous shape
-        if (placeShapeFlag) {
-            setPlaceShapeFlag(false)
-        } else {
-            if (oldShape) {
-                updatedBoard = updateBoard(updatedBoard, oldShape, {cleanUp: true, updateImmediately: false})
-            }
-        }
-
-
-        updateBoard(updatedBoard, updatedShape, {cleanUp: false, updateImmediately: true})
-    }, [shape])
-
     // in game timer (piece gravity)
     const gravityLoop = useCallback(() => {
         // check if the shape can still move down
-        if (tryMove(0, 1)) {
-            console.log("move down")
-        }
-        else {
-            setPlaceShapeFlag(true)
-            getNewShape()
+        if (!gameOverFlag) {
+            if (tryMove(0, 1)) {
+                console.log("move down")
+            } else {
+                placeShape(board, shape, {spawnNewShape: true, lockShape: true})
+            }
         }
 
-    }, [tryMove, setPlaceShapeFlag, getNewShape])
+    }, [tryMove, getNewShape, gameOverFlag])
+
+    useEffect(() => {
+        if (gameOverFlag) {
+            const newBoard = createEmptyBoard(ROW_COUNT, COL_COUNT)
+            placeShape(newBoard, resetShape())
+            setGameOver(false)
+        }
+    }, [gameOverFlag])
 
     useEffect(() => {
         window.addEventListener("keydown", onKeyDown)
@@ -241,5 +303,5 @@ export const useBoard = () => {
 
     useLoop(gravityLoop, 600)
 
-    return [board] as const
+    return [board, gameOverFlag] as const
 }

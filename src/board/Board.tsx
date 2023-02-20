@@ -2,13 +2,13 @@
 import React, { memo, useCallback, useEffect } from "react"
 // import { useBoardLogic, ROW_COUNT, COL_COUNT } from "./BoardLogic"
 import { useBoard, ROW_COUNT, COL_COUNT } from "./useBoard"
-import { Container, Graphics, Sprite } from "@pixi/react"
+import { Container, Graphics, Sprite, Text } from "@pixi/react"
 import * as PIXI from "pixi.js"
 
 import { IBoardGrid, IRowProps, IBlockProps } from "./Board.interfaces"
 
 const Board = (): JSX.Element => {
-    const [board] = useBoard()
+    const [board, gameOverFlag] = useBoard(0)
 
     return (
         <Container position={[0, 0]}>
@@ -18,6 +18,7 @@ const Board = (): JSX.Element => {
                     <Row row={row} rowIndex={rowIdx}/>
                 )
             })}
+            {gameOverFlag && <Text text="Game Over" x={100} y={50} style={{fill: 0x000000}}/>}
         </Container>
     )
 }

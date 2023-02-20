@@ -5,9 +5,8 @@ import { useBag } from "./useBag"
 
 
 export const useShape = () => {
-    const [oldShape, setOldShape] = useState<IShapePosition|null>(null)
     const [shape, setShape] = useState<IShapePosition>({shape: randomShape(), position: {x: 3, y: 0}, state: 1})
-    const [savedBag] = useBag(shape.shape)
+    const [savedBag, resetBag] = useBag(shape.shape)
 
     const takeFromBag = (): IShape => {
         const newShape = savedBag.current[0]
@@ -16,24 +15,35 @@ export const useShape = () => {
         return newShape
     }
 
-    const getNewShape = () => {
-        setOldShape(null)
-        setShape({shape: takeFromBag(), position: {x: 3, y: 0}, state: 1})
+    const getNewShape = (): IShapePosition => {
+        const newShape = {shape: takeFromBag(), position: {x: 3, y: 0}, state: 1}
+        setShape(newShape)
+        return newShape
     }
 
-    const moveShape = (x: number, y: number) => {
-        setOldShape(structuredClone(shape))
-        setShape({ ...shape, position: { x: shape.position.x + x, y: shape.position.y + y } })
+    const moveShape = (x: number, y: number): IShapePosition => {
+        const newShape = {...shape, position: { x: shape.position.x + x, y: shape.position.y + y }}
+        setShape(newShape)
+        return newShape
     }
 
-    const rotateShape = (ccw = false) => {
-        setOldShape(structuredClone(shape))
+    const rotateShape = (ccw = false): IShapePosition => {
+        const newShape = {...shape}
         if (ccw) {
-            setShape({ ...shape, state: shape.state === 1 ? 4 : shape.state - 1 })
+            newShape.state = newShape.state === 1 ? 4 : newShape.state - 1
         } else {
-            setShape({ ...shape, state: shape.state === 4 ? 1 : shape.state + 1 })
+            newShape.state = newShape.state === 4 ? 1 : newShape.state + 1
         }
+        setShape(newShape)
+        return newShape
     }
 
-    return [shape, oldShape, moveShape, rotateShape, getNewShape] as const
+    const resetShape = (): IShapePosition => {
+        const newFirstShape: IShapePosition = {shape: randomShape(), position: {x: 3, y: 0}, state: 1}
+        setShape(newFirstShape)
+        resetBag(newFirstShape.shape)
+        return newFirstShape
+    }
+
+    return [shape, moveShape, rotateShape, getNewShape, resetShape] as const
 }

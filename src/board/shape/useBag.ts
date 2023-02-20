@@ -9,8 +9,12 @@ export const useBag = (initialShape: IShape) => {
         if (savedBag.current.length === 0) {
             savedBag.current.push(...getRandomBag())
         }
-        console.log("bag ", savedBag.current)
+
     }, [savedBag.current])
 
-    return [savedBag] as const
+    const resetBag = (initialShape: IShape) => {
+        savedBag.current = [...getRandomBag(initialShape)]
+    }
+
+    return [savedBag, resetBag] as const
 }
