@@ -3,10 +3,6 @@ interface IPosition {
     y: number
 }
 
-interface IBoardProps {
-    random: boolean
-}
-
 interface IBoardGrid {
     rows: number
     cols: number
@@ -23,7 +19,6 @@ interface IBlockProps {
 
 export type {
     IPosition,
-    IBoardProps,
     IBoardGrid,
     IRowProps,
     IBlockProps

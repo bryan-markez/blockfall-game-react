@@ -1,23 +1,13 @@
 /* eslint-disable react/jsx-key */
-import React, { memo, useCallback, useEffect } from "react"
-import { useBoardLogic, ROW_COUNT, COL_COUNT } from "./BoardLogic"
-import { Container, Graphics, Sprite } from "@pixi/react"
+import React, { memo, useCallback } from "react"
+import { useBoard, ROW_COUNT, COL_COUNT } from "./useBoard"
+import { Container, Graphics, Sprite, Text } from "@pixi/react"
 import * as PIXI from "pixi.js"
 
-import { IBoardProps, IBoardGrid, IRowProps, IBlockProps } from "./Board.interfaces"
+import { IBoardGrid, IRowProps, IBlockProps } from "./Board.interfaces"
 
-const Board: React.FC<IBoardProps> = () => {
-    const [board, onKeyDown, onKeyUp] = useBoardLogic()
-
-    useEffect(() => {
-        window.addEventListener("keydown", onKeyDown)
-        window.addEventListener("keyup", onKeyUp)
-    
-        return () => {
-            window.removeEventListener("keydown", onKeyDown)
-            window.removeEventListener("keyup", onKeyUp)
-        }
-    }, [onKeyDown, onKeyUp])
+const Board = (): JSX.Element => {
+    const [board, gameOverFlag] = useBoard(0)
 
     return (
         <Container position={[0, 0]}>
@@ -27,6 +17,7 @@ const Board: React.FC<IBoardProps> = () => {
                     <Row row={row} rowIndex={rowIdx}/>
                 )
             })}
+            {gameOverFlag && <Text text="Game Over" x={100} y={50} style={{fill: 0x000000}}/>}
         </Container>
     )
 }

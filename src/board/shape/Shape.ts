@@ -27,7 +27,6 @@ const O_SHAPE: IShape = {
             { x: 2, y: 1 }
         ]
     },
-    currentState: 1,
     width: 4,
     height: 3,
     value: 1
@@ -60,7 +59,6 @@ const I_SHAPE: IShape = {
             { x: 1, y: 3 }
         ]
     },
-    currentState: 1,
     width: 4,
     height: 4,
     value: 2
@@ -93,7 +91,6 @@ const L_SHAPE: IShape = {
             { x: 0, y: 2 }
         ]
     },
-    currentState: 1,
     width: 3,
     height: 3,
     value: 3
@@ -126,7 +123,6 @@ const J_SHAPE: IShape = {
             { x: 1, y: 2 }
         ]
     },
-    currentState: 1,
     width: 3,
     height: 3,
     value: 4
@@ -159,7 +155,6 @@ const S_SHAPE: IShape = {
             { x: 1, y: 2 }
         ]
     },
-    currentState: 1,
     width: 3,
     height: 3,
     value: 5
@@ -192,7 +187,6 @@ const Z_SHAPE: IShape = {
             { x: 1, y: 0 }
         ]
     },
-    currentState: 1,
     width: 3,
     height: 3,
     value: 6
@@ -225,7 +219,6 @@ const T_SHAPE: IShape = {
             { x: 0, y: 1 }
         ]
     },
-    currentState: 1,
     width: 3,
     height: 3,
     value: 7
@@ -245,6 +238,35 @@ const randomShape = (): IShape => {
     return shapes[Math.floor(Math.random() * shapes.length)]
 }
 
+const getRandomBag = (initialShape: IShape|null = null): IShape[] => {
+    const bag = [
+        O_SHAPE,
+        I_SHAPE,
+        L_SHAPE,
+        J_SHAPE,
+        S_SHAPE,
+        Z_SHAPE,
+        T_SHAPE
+    ]
+
+    for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]]
+    }
+
+    if (initialShape) {
+        for (let i = 0; i < bag.length; i++) {
+            const currentShape = bag[i]
+            if (currentShape.value === initialShape.value) {
+                bag.splice(i, 1)
+                break
+            }
+        }
+    }
+
+    return bag
+}
+
 export {
     O_SHAPE,
     I_SHAPE,
@@ -253,5 +275,6 @@ export {
     S_SHAPE,
     Z_SHAPE,
     T_SHAPE,
-    randomShape
+    randomShape,
+    getRandomBag
 }
