@@ -1,6 +1,5 @@
 /* eslint-disable react/jsx-key */
-import React, { memo, useCallback, useEffect } from "react"
-// import { useBoardLogic, ROW_COUNT, COL_COUNT } from "./BoardLogic"
+import React, { memo, useCallback } from "react"
 import { useBoard, ROW_COUNT, COL_COUNT } from "./useBoard"
 import { Container, Graphics, Sprite, Text } from "@pixi/react"
 import * as PIXI from "pixi.js"

@@ -2,11 +2,11 @@
 Not exactly sure in what order to do these things. We'll find out.
 
 ## Gameplay
-1. Make pieces spawn in the middle
-2. Implement a lose condition and add a button to restart the game
+1. <del>Make pieces spawn in the middle
+2. <del>Implement a lose condition and add a button to restart the game
 3. Implement a scoring system (some arbitrary scoring for lines cleared.
 4. Implement a ghost piece system
-5. Implement a 7-bag piece sysyem
+5. <del>Implement a 7-bag piece system
 6. Implement a hold system
 7. Implement a piece preview system
 8. Implement DAS, ARR, and SDR (tetris handling)

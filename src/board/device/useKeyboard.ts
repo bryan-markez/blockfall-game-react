@@ -1,9 +1,5 @@
 import React, { useEffect, useRef } from "react"
 
-export const useKeyboard = () => {
-    const savedCallback = useRef()
-}
-
 // TODO need to make the callback type safer. Might need to rewrite some of the code so that the only functions we are passing in are () => {}
 export const useKey = (callback: Function, key: string, args?: Array<any>) => {
     const savedCallback = useRef<Function>()
