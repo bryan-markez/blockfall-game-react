@@ -7,7 +7,7 @@ import * as PIXI from "pixi.js"
 import { IBoardGrid, IRowProps, IBlockProps } from "./Board.interfaces"
 
 const Board = (): JSX.Element => {
-    const [board, gameOverFlag] = useBoard(0)
+    const [board, gameOverFlag, score, combo, backToBack] = useBoard(0)
 
     return (
         <Container position={[0, 0]}>
@@ -17,7 +17,11 @@ const Board = (): JSX.Element => {
                     <Row row={row} rowIndex={rowIdx}/>
                 )
             })}
-            {gameOverFlag && <Text text="Game Over" x={100} y={50} style={{fill: 0x000000}}/>}
+
+            <Text text={`Score: ${score}`} x={225} y={100}/>
+            <Text text={`Combo: ${combo}`} x={225} y={150}/>
+            {(backToBack > 0) && <Text text={`Back to Back ${backToBack}x`} x={225} y={200}/>}
+            {gameOverFlag && <Text text="Game Over" x={100} y={50}/>}
         </Container>
     )
 }
