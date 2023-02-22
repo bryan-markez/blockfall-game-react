@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react"
 import { useShape } from "./shape/useShape"
 import { useLoop } from "./useLoop"
 import { useKey } from "./device/useKeyboard"
+import { useScoreSystem } from "./useScoreSystem"
 import { IShapePosition, IShapeState } from "./shape/Shape.interfaces"
 import { IPosition } from "./Board.interfaces"
 
@@ -17,8 +18,9 @@ export const useBoard = (gameId: number) => {
     const [board, setBoard] = useState<number[][]>(createEmptyBoard(ROW_COUNT, COL_COUNT))
     const [shape, moveShape, rotateShape, getNewShape, resetShape] = useShape()
     const [gameOverFlag, setGameOver] = useState<boolean>(false)
+    const [score, backToBack, combo, updateScoreByLineClear, resetScore] = useScoreSystem()
 
-    const validatePlacement = (spawnedShape: IShapePosition, boardPreview?: [][]): boolean => {
+    const validatePlacement = (spawnedShape: IShapePosition, boardPreview?: number[][]): boolean => {
         let validMoveFlag = true
         // todo not used for not but it might be useful for later
         const updatedBoardPreview: number[][] = structuredClone((boardPreview) ? boardPreview : board)
@@ -183,7 +185,7 @@ export const useBoard = (gameId: number) => {
         const spawnNewShape: boolean | undefined = opts.spawnNewShape
         const lockedShape: boolean | undefined = opts.lockShape
 
-        let updatedBoard = structuredClone(board)
+        let updatedBoard: number[][] = structuredClone(board)
 
         if (shapesToClean && shapesToClean.length > 0) {
             shapesToClean.forEach((shapeToClean) => {
@@ -192,15 +194,28 @@ export const useBoard = (gameId: number) => {
         }
 
         if (lockedShape) {
+            // checking for game over
             if (validatePlacement(shape, updatedBoard)) {
                 updatedBoard = updateBoard(updatedBoard, shape, {cleanUp: false, updateImmediately: true})
             } else {
                 setGameOver(true)
+                resetScore()
                 return updatedBoard
             }
+
+            // checking for line clears
+            let lineClears = 0
+            for (const row of updatedBoard) {
+                if (row.every((value) => value !== 0)) {
+                    const rowToClear = updatedBoard.indexOf(row)
+                    updatedBoard.splice(rowToClear, 1)
+                    updatedBoard.unshift(new Array(COL_COUNT).fill(0))
+                    lineClears += 1
+                }
+            }
+            updateScoreByLineClear(lineClears, false)
         } else {
             updatedBoard = updateBoard(updatedBoard, shape, {cleanUp: false, updateImmediately: true})
-
         }
 
         if (spawnNewShape) {
@@ -263,5 +278,5 @@ export const useBoard = (gameId: number) => {
 
     useLoop(gravityLoop, 600)
 
-    return [board, gameOverFlag] as const
+    return [board, gameOverFlag, score, combo, backToBack] as const
 }
