@@ -1,7 +1,4 @@
-interface IPosition {
-    x: number
-    y: number
-}
+import { IShapePosition } from "./shape/Shape.interfaces"
 
 interface IBoardGrid {
     rows: number
@@ -15,11 +12,16 @@ interface IRowProps {
 
 interface IBlockProps {
     state: number
+    ghostFlag?: boolean
+}
+
+interface IGhostPieceProps {
+    shape: IShapePosition
 }
 
 export type {
-    IPosition,
     IBoardGrid,
     IRowProps,
-    IBlockProps
+    IBlockProps,
+    IGhostPieceProps
 }

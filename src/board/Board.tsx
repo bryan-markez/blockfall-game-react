@@ -4,10 +4,12 @@ import { useBoard, ROW_COUNT, COL_COUNT } from "./useBoard"
 import { Container, Graphics, Sprite, Text } from "@pixi/react"
 import * as PIXI from "pixi.js"
 
-import { IBoardGrid, IRowProps, IBlockProps } from "./Board.interfaces"
+import { IBoardGrid, IRowProps, IBlockProps, IGhostPieceProps } from "./Board.interfaces"
+import { IPosition } from "./General.interfaces"
+import { IShapeState } from "./shape/Shape.interfaces"
 
 const Board = (): JSX.Element => {
-    const [board, gameOverFlag, score, combo, backToBack] = useBoard(0)
+    const [board, gameOverFlag, score, combo, backToBack, ghostShape] = useBoard(0)
 
     return (
         <Container position={[0, 0]}>
@@ -21,6 +23,7 @@ const Board = (): JSX.Element => {
             <Text text={`Score: ${score}`} x={225} y={100}/>
             <Text text={`Combo: ${combo}`} x={225} y={150}/>
             {(backToBack > 0) && <Text text={`Back to Back ${backToBack}x`} x={225} y={200}/>}
+            {(ghostShape) && <GhostShapeIndicator shape={ghostShape}/>}
             {gameOverFlag && <Text text="Game Over" x={100} y={50}/>}
         </Container>
     )
@@ -59,6 +62,8 @@ const Row: React.FC<IRowProps> = ({...props}) => {
 
 const Block: React.FC<IBlockProps> = ({...props}) => {
     const pieceState = props.state
+    const ghostPieceFlag = props.ghostFlag
+
     let color = 0xFFFFFF
     switch (pieceState) {
     case 1:
@@ -89,10 +94,16 @@ const Block: React.FC<IBlockProps> = ({...props}) => {
         // purple
         color = 0x800080
         break
-    default:
+    case -1:
+        // grey
+        color = 0x808080
         break
     }
 
+    let alphaValue = props.state === 0 ? 0 : 0.8
+    if (ghostPieceFlag) {
+        alphaValue = 0.3 * alphaValue
+    }
 
     return (
         <Sprite 
@@ -100,8 +111,25 @@ const Block: React.FC<IBlockProps> = ({...props}) => {
             width={20} 
             height={20} 
             tint={props.state === 0 ? 0xFFFFFF : color}
-            alpha={props.state === 0 ? 0 : 0.8}
+            alpha={alphaValue}
         />
+    )
+}
+
+const GhostShapeIndicator = ({shape}: IGhostPieceProps): JSX.Element => {
+    const position = shape.position as IPosition
+    const blocks = shape.shape.states[shape.state as keyof IShapeState]
+
+    return (
+        <>
+            {blocks.map((block, idx) => {
+                return (
+                    <Container position={[(position.x + block.x) * 20, (position.y + block.y) * 20]}>
+                        <Block state={shape.shape.value} ghostFlag/>
+                    </Container>
+                )
+            })}
+        </>
     )
 }
 
