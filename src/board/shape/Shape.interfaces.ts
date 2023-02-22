@@ -1,4 +1,4 @@
-import { IPosition } from "../Board.interfaces"
+import { IPosition } from "../General.interfaces"
 
 interface IShapeState {
     1: IPosition[]

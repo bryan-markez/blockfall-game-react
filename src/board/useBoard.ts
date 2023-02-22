@@ -4,7 +4,7 @@ import { useLoop } from "./useLoop"
 import { useKey } from "./device/useKeyboard"
 import { useScoreSystem } from "./useScoreSystem"
 import { IShapePosition, IShapeState } from "./shape/Shape.interfaces"
-import { IPosition } from "./Board.interfaces"
+import { IPosition } from "./General.interfaces"
 
 export const ROW_COUNT = 20
 export const COL_COUNT = 10
@@ -19,6 +19,7 @@ export const useBoard = (gameId: number) => {
     const [shape, moveShape, rotateShape, getNewShape, resetShape] = useShape()
     const [gameOverFlag, setGameOver] = useState<boolean>(false)
     const [score, backToBack, combo, updateScoreByLineClear, resetScore] = useScoreSystem()
+    const [ghostShape, setGhostShape] = useState<IShapePosition | null>(null)
 
     const validatePlacement = (spawnedShape: IShapePosition, boardPreview?: number[][]): boolean => {
         let validMoveFlag = true
@@ -278,5 +279,26 @@ export const useBoard = (gameId: number) => {
 
     useLoop(gravityLoop, 600)
 
-    return [board, gameOverFlag, score, combo, backToBack] as const
+    // ghost piece indicator
+    useEffect(() => {
+        if (shape) {
+            const currentBoard = structuredClone(board)
+            const currentShape = structuredClone(shape)
+
+            const newMovePos = {x: 0, y: 0}
+            while (validateMove(newMovePos)) {
+                newMovePos.y++
+            }
+
+            const updatedShape = {...currentShape, position: {
+                x: newMovePos.x + currentShape.position.x,
+                y: currentShape.position.y + newMovePos.y - 1
+            }}
+            
+            setGhostShape(updatedShape)
+        }
+
+    }, [board, shape])
+
+    return [board, gameOverFlag, score, combo, backToBack, ghostShape] as const
 }
