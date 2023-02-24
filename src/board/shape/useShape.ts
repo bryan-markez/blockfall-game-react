@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import { useState } from "react"
 import { randomShape } from "./Shape"
 import { IShapePosition, IShape } from "./Shape.interfaces"
 import { useBag } from "./useBag"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useShape } from "./shape/useShape"
 import { useLoop } from "./useLoop"
 import { useKey } from "./device/useKeyboard"
@@ -13,7 +13,7 @@ const createEmptyBoard = (x: number, y: number): number[][] => {
     return board
 }
 
-export const useBoard = (gameId: number) => {
+export const useBoard = () => {
     const [board, setBoard] = useState<number[][]>(createEmptyBoard(ROW_COUNT, COL_COUNT))
     const [shape, moveShape, rotateShape, getNewShape, resetShape] = useShape()
     const [gameOverFlag, setGameOver] = useState<boolean>(false)
@@ -135,31 +135,24 @@ export const useBoard = (gameId: number) => {
         return getNewShape()
     }
 
-    const move = (x: number, y: number) => {
-        moveShapeInBoard(x, y)
-    }
-    const rotate = (ccw: boolean) => {
-        rotateShapeInBoard(ccw)
-    }
-    useKey(move, "ArrowLeft", [-1, 0])
-    useKey(move, "ArrowRight", [1, 0])
-    useKey(move, "ArrowDown", [0, 1])
-    useKey(hardDrop, " ")
-    useKey(rotate, "s", [true])
-    useKey(rotate, "f", [false])
-    useKey(move, "l", [-1, 0])
-    useKey(move, "'", [1, 0])
-    useKey(move, ";", [0, 1])
-    useKey(hardDrop, "p")
+    useKey(() => {moveShapeInBoard(-1, 0)}, "ArrowLeft")
+    useKey(() => {moveShapeInBoard(1, 0)}, "ArrowRight")
+    useKey(() => {moveShapeInBoard(0, 1)}, "ArrowDown")
+    useKey(() => {hardDrop()}, " ")
+    useKey(() => {rotateShapeInBoard(true)}, "s")
+    useKey(() => {rotateShapeInBoard(false)}, "f")
+    useKey(() => {moveShapeInBoard(-1, 0)}, "l")
+    useKey(() => {moveShapeInBoard(1, 0)}, "'")
+    useKey(() => {moveShapeInBoard(0, 1)}, ";")
+    useKey(() => {hardDrop()}, "p")
 
-    // TODO Will reenable this when we have a proper game over screen. For now, restart your browser :)
-    // useEffect(() => {
-    //     if (gameOverFlag) {
-    //         const newBoard = createEmptyBoard(ROW_COUNT, COL_COUNT)
-    //         placeShape(newBoard, resetShape())
-    //         setGameOver(false)
-    //     }
-    // }, [gameOverFlag])
+    useEffect(() => {
+        if (gameOverFlag) {
+            createEmptyBoard(ROW_COUNT, COL_COUNT)
+            resetShape()
+            // setGameOver(false) // TODO Will reenable this when we have a proper game over screen. For now, restart your browser :)
+        }
+    }, [gameOverFlag])
 
     // in game timer (piece gravity)
     const gravityLoop = useCallback(() => {

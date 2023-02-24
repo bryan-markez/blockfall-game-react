@@ -15,7 +15,6 @@ interface IBlockProps {
     ghostFlag?: boolean
 }
 
-
 // TODO we need to start figuring out how to separate graphics / game logic
 interface IShapePieceProps {
     shape: IShapePosition
