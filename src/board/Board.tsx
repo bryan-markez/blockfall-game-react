@@ -1,29 +1,30 @@
-/* eslint-disable react/jsx-key */
 import React, { memo, useCallback } from "react"
 import { useBoard, ROW_COUNT, COL_COUNT } from "./useBoard"
 import { Container, Graphics, Sprite, Text } from "@pixi/react"
 import * as PIXI from "pixi.js"
 
-import { IBoardGrid, IRowProps, IBlockProps, IGhostPieceProps } from "./Board.interfaces"
+import { IBoardGrid, IRowProps, IBlockProps, IShapePieceProps } from "./Board.interfaces"
 import { IPosition } from "./General.interfaces"
 import { IShapeState } from "./shape/Shape.interfaces"
 
 const Board = (): JSX.Element => {
-    const [board, gameOverFlag, score, combo, backToBack, ghostShape] = useBoard(0)
+    const [board, shape, gameOverFlag, score, combo, backToBack, ghostShape] = useBoard()
 
     return (
         <Container position={[0, 0]}>
             <BoardGrid rows={ROW_COUNT} cols={COL_COUNT}/>
             {board.map((row, rowIdx) => {
+                const key = `row-${rowIdx}`
                 return (
-                    <Row row={row} rowIndex={rowIdx}/>
+                    <Row key={key} row={row} rowIndex={rowIdx}/>
                 )
             })}
+            <Shape shape={shape} ghost={false}/>
 
             <Text text={`Score: ${score}`} x={225} y={100}/>
             <Text text={`Combo: ${combo}`} x={225} y={150}/>
             {(backToBack > 0) && <Text text={`Back to Back ${backToBack}x`} x={225} y={200}/>}
-            {(ghostShape) && <GhostShapeIndicator shape={ghostShape}/>}
+            {(ghostShape) && <Shape shape={ghostShape} ghost={true}/>}
             {gameOverFlag && <Text text="Game Over" x={100} y={50}/>}
         </Container>
     )
@@ -50,8 +51,9 @@ const Row: React.FC<IRowProps> = ({...props}) => {
     return (
         <>
             {props.row.map((state, col) => {
+                const key = `block-${col}-${props.rowIndex}`
                 return (
-                    <Container position={[col * 20, props.rowIndex * 20]}>
+                    <Container key={key} position={[col * 20, props.rowIndex * 20]}>
                         <Block state={state}/>
                     </Container>
                 )
@@ -116,16 +118,17 @@ const Block: React.FC<IBlockProps> = ({...props}) => {
     )
 }
 
-const GhostShapeIndicator = ({shape}: IGhostPieceProps): JSX.Element => {
+const Shape = ({shape, ghost}: IShapePieceProps): JSX.Element => {
     const position = shape.position as IPosition
     const blocks = shape.shape.states[shape.state as keyof IShapeState]
 
     return (
         <>
             {blocks.map((block, idx) => {
+                const key = `block-${block.x}-${block.y}-${idx}`
                 return (
-                    <Container position={[(position.x + block.x) * 20, (position.y + block.y) * 20]}>
-                        <Block state={shape.shape.value} ghostFlag/>
+                    <Container key={key} position={[(position.x + block.x) * 20, (position.y + block.y) * 20]}>
+                        <Block state={shape.shape.value} ghostFlag={ghost}/>
                     </Container>
                 )
             })}

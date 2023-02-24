@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"
+import { useState } from "react"
 
 export const useScoreSystem = () => {
     const [score, setScore] = useState<number>(0)
@@ -9,27 +9,21 @@ export const useScoreSystem = () => {
         let newScore = 0
         const updatedB2B = backToBack
 
-        // Points for line clears
-        if (lines === 1) {
-            if (spin) {
-                newScore = 800
-            } else {
-                newScore = 100
-            }
-        } else if (lines === 2) {
-            if (spin) {
-                newScore = 1200
-            } else {
-                newScore = 300
-            }
-        } else if (lines === 3) {
-            if (spin) {
-                newScore = 1600
-            } else {
-                newScore = 500
-            }
-        } else if (lines === 4) {
+        switch (lines) {
+        case 1:
+            newScore = (spin) ? 800 : 100
+            break
+        case 2:
+            newScore = (spin) ? 1200 : 300
+            break
+        case 3:
+            newScore = (spin) ? 1600: 500
+            break
+        case 4:
             newScore = 800
+            break
+        default:
+            break
         }
 
         // Adjust score for B2B

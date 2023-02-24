@@ -1,8 +1,7 @@
-import React, { useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 
-// TODO need to make the callback type safer. Might need to rewrite some of the code so that the only functions we are passing in are () => {}
-export const useKey = (callback: Function, key: string, args?: Array<any>) => {
-    const savedCallback = useRef<Function>()
+export const useKey = (callback: () => void, key: string) => {
+    const savedCallback = useRef<() => void>()
 
     // Remember the latest callback.
     useEffect(() => {
@@ -14,12 +13,7 @@ export const useKey = (callback: Function, key: string, args?: Array<any>) => {
             if (savedCallback.current) {
                 if (e.key === key) {
                     console.log("hit key: ", e)
-                    if (args) {
-                        savedCallback.current(...args)
-                    } else {
-                        savedCallback.current()
-                    }
-
+                    savedCallback.current()
                 }
             }
         }

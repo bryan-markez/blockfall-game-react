@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import { useState } from "react"
 import { randomShape } from "./Shape"
 import { IShapePosition, IShape } from "./Shape.interfaces"
 import { useBag } from "./useBag"
@@ -21,20 +21,26 @@ export const useShape = () => {
         return newShape
     }
 
-    const moveShape = (x: number, y: number): IShapePosition => {
-        const newShape = {...shape, position: { x: shape.position.x + x, y: shape.position.y + y }}
-        setShape(newShape)
+    const moveShape = (x: number, y: number, update = true): IShapePosition => {
+        const newShape: IShapePosition = structuredClone(shape)
+        newShape.position = { x: shape.position.x + x, y: shape.position.y + y }
+        if (update) {
+            setShape(newShape)
+        }
         return newShape
     }
 
-    const rotateShape = (ccw = false): IShapePosition => {
-        const newShape = {...shape}
+    const rotateShape = (ccw = false, update = true): IShapePosition => {
+        const newShape: IShapePosition = structuredClone(shape)
         if (ccw) {
             newShape.state = newShape.state === 1 ? 4 : newShape.state - 1
         } else {
             newShape.state = newShape.state === 4 ? 1 : newShape.state + 1
         }
-        setShape(newShape)
+
+        if (update) {
+            setShape(newShape)
+        }
         return newShape
     }
 
