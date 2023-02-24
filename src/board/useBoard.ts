@@ -4,7 +4,6 @@ import { useLoop } from "./useLoop"
 import { useKey } from "./device/useKeyboard"
 import { useScoreSystem } from "./useScoreSystem"
 import { IShapePosition, IShapeState } from "./shape/Shape.interfaces"
-import { IPosition } from "./General.interfaces"
 
 export const ROW_COUNT = 20
 export const COL_COUNT = 10
@@ -21,261 +20,160 @@ export const useBoard = (gameId: number) => {
     const [score, backToBack, combo, updateScoreByLineClear, resetScore] = useScoreSystem()
     const [ghostShape, setGhostShape] = useState<IShapePosition | null>(null)
 
-    const validatePlacement = (spawnedShape: IShapePosition, boardPreview?: number[][]): boolean => {
-        let validMoveFlag = true
-        // todo not used for not but it might be useful for later
-        const updatedBoardPreview: number[][] = structuredClone((boardPreview) ? boardPreview : board)
-        const spawnedShapedPreview: IShapePosition = structuredClone(spawnedShape)
-
-        const currentShapeValues = spawnedShapedPreview.shape.states[spawnedShapedPreview.state as keyof IShapeState]
-
-        for (const shapePos of currentShapeValues) {
-            const x = shapePos.x + spawnedShapedPreview.position.x
-            const y = shapePos.y + spawnedShapedPreview.position.y
-
-            if (x < 0 || y < 0 || x >= COL_COUNT || y >= ROW_COUNT) {
-                validMoveFlag = false
-                break
-            }
-
-            // check if board is occupied in the first 2 rows
-            if (y < 2) {
-                validMoveFlag = false
-                break
-            }
-        }
-
-        return validMoveFlag
-    }
-
-    // validate the next move
-    const validateMove = (movePos: IPosition): boolean => {
-        let validMoveFlag = true
-        const updatedBoardPreview: number[][] = structuredClone(board)
-
-        // need the current shape in order to clean up the board
-        const currentShape: IShapePosition = structuredClone(shape)
-
-        const currentShapeValues = currentShape.shape.states[currentShape.state as keyof IShapeState]
-
-        currentShapeValues.forEach((shapePos) => {
-            updatedBoardPreview[shapePos.y + currentShape.position.y][shapePos.x + currentShape.position.x] = 0
-        })
-
-        const newShapePosition = currentShape.position
-        newShapePosition.x += movePos.x
-        newShapePosition.y += movePos.y
-
-
-        for (const shapePos of currentShapeValues) {
-            const x = shapePos.x + newShapePosition.x
-            const y = shapePos.y + newShapePosition.y
-
-            if (x < 0 || y < 0 || x >= COL_COUNT || y >= ROW_COUNT) {
-                validMoveFlag = false
-                break
-            }
-
-            if (updatedBoardPreview[y][x] !== 0) {
-                validMoveFlag = false
-                break
-            }
-        }
-
-        return validMoveFlag
-    }
-
-    const validateRotation = (ccw = false): boolean => {
-        let validMoveFlag = true
-        const updatedBoardPreview: number[][] = structuredClone(board)
-
-        // need the current shape in order to clean up the board
-        const currentShape: IShapePosition = structuredClone(shape)
-
-        const currentShapeValues = currentShape.shape.states[currentShape.state as keyof IShapeState]
-
-        currentShapeValues.forEach((shapePos) => {
-            updatedBoardPreview[shapePos.y + currentShape.position.y][shapePos.x + currentShape.position.x] = 0
-        })
-
-        const newShapePosition = currentShape.position
-
-        const newShapeState = ccw ? (currentShape.state === 1 ? 4 : currentShape.state - 1) : (currentShape.state === 4 ? 1 : currentShape.state + 1)
-        const newShapeValues = currentShape.shape.states[newShapeState as keyof IShapeState]
+    // new shape placement logic
+    const validateShapePlacement = (shape: IShapePosition, board: number[][], checkGameOver = false): boolean => {
+        // todo turn checkGameOver into an option
         
-        for (const shapePos of newShapeValues) {
-            const x = shapePos.x + newShapePosition.x
-            const y = shapePos.y + newShapePosition.y
+        const currentBoard: number[][] = structuredClone(board)
+        const currentShape: IShapePosition = structuredClone(shape)
+        let valid = true
+
+        for (const shapePos of currentShape.shape.states[currentShape.state as keyof IShapeState]) {
+            const x = shapePos.x + currentShape.position.x
+            const y = shapePos.y + currentShape.position.y
 
             if (x < 0 || y < 0 || x >= COL_COUNT || y >= ROW_COUNT) {
-                validMoveFlag = false
+                valid = false
                 break
             }
 
-            if (updatedBoardPreview[y][x] !== 0) {
-                validMoveFlag = false
+            if (currentBoard[y][x] !== 0) {
+                valid = false
+                break
+            }
+
+            if (checkGameOver && y < 2) {
+                valid = false
                 break
             }
         }
 
-        return validMoveFlag
+        return valid
     }
 
-    const tryMove = (x: number, y: number) => {
-        let flag = false
+    const hardDrop = (): IShapePosition => {
+        const currentBoard: number[][] = structuredClone(board)
+        const currentShape: IShapePosition = structuredClone(shape)
 
-        if (validateMove({x, y})) {
-            const newShape = moveShape(x, y)
-            placeShape(board, newShape, {shapesToClean: [shape]})
-
-            flag = true
+        const newShape = structuredClone(currentShape)
+        while (validateShapePlacement(newShape, currentBoard)) {
+            newShape.position.y++
         }
 
-        return flag
+        // move the shape back up one row since that last execution of the while loop will have failed
+        newShape.position.y--
+
+        const finalShape = moveShape(0, newShape.position.y - currentShape.position.y)
+        return lockShape(finalShape)
     }
 
-    const tryRotate = (ccw = false) => {
-        let flag = false
+    const moveShapeInBoard = (x: number, y: number): IShapePosition => {
+        let newShape: IShapePosition = moveShape(x, y, false)
 
-        if (validateRotation(ccw)) {
-            const newShape = rotateShape(ccw)
-            placeShape(board, newShape, {shapesToClean: [shape]})
-            flag = true
+        if (validateShapePlacement(newShape, board)) {
+            newShape = moveShape(x, y)
+            return newShape
+        } else {
+            return shape
         }
-
-        return flag
     }
 
-    type IUpdateBoardOptions = {
-        cleanUp: boolean
-        updateImmediately: boolean
+    const rotateShapeInBoard = (ccw: boolean): IShapePosition => {
+        let newShape: IShapePosition = structuredClone(shape)
+        newShape = rotateShape(ccw, false) // false because we don't want to update the board yet
+
+        if (validateShapePlacement(newShape, board)) {
+            newShape = rotateShape(ccw, true) // true because we want to update the board now
+            return newShape
+        } else {
+            return shape
+        }
     }
 
-    const updateBoard = (incomingBoard: number[][], incomingShape: IShapePosition | null, opts: IUpdateBoardOptions) => {
-        const { cleanUp, updateImmediately } = opts
-
+    const updateBoard = (board: number[][], shape: IShapePosition) => {
         // making a full clone for safety, would need to evaluate if this is causing performance issues later
-        const updatedBoard: number[][] = structuredClone(incomingBoard)
-        const updatedShape: IShapePosition = structuredClone(incomingShape)
-
-        if (updatedShape === null) {
-            return updatedBoard
-        }
+        const updatedBoard: number[][] = structuredClone(board)
+        const updatedShape: IShapePosition = structuredClone(shape)
 
         const updatedShapeValues = updatedShape.shape.states[updatedShape.state as keyof IShapeState]
 
         updatedShapeValues.forEach((shapePos) => {
-            updatedBoard[shapePos.y + updatedShape.position.y][shapePos.x + updatedShape.position.x] = (cleanUp) ? 0 : updatedShape.shape.value
+            updatedBoard[shapePos.y + updatedShape.position.y][shapePos.x + updatedShape.position.x] = updatedShape.shape.value
         })
 
-        if (updateImmediately) {
-            setBoard(updatedBoard)
+        // checking for line clears
+        let lineClears = 0
+        for (const row of updatedBoard) {
+            if (row.every((value) => value !== 0)) {
+                const rowToClear = updatedBoard.indexOf(row)
+                updatedBoard.splice(rowToClear, 1)
+                updatedBoard.unshift(new Array(COL_COUNT).fill(0))
+                lineClears += 1
+            }
         }
+        updateScoreByLineClear(lineClears, false)
+
+        setBoard(updatedBoard)
 
         return updatedBoard
     }
 
-    type IPlaceShapeOptions = {
-        shapesToClean?: IShapePosition[]
-        spawnNewShape?: boolean
-        lockShape?: boolean
+    const lockShape = (newShape?: IShapePosition): IShapePosition => {
+        const currentBoard: number[][] = structuredClone(board)
+        const currentShape: IShapePosition = structuredClone((newShape) ? newShape : shape)
+
+        // checking for game over
+        if (!validateShapePlacement(currentShape, currentBoard, true)) {
+            setGameOver(true)
+            resetScore()
+            return currentShape
+        }
+
+        updateBoard(currentBoard, currentShape)
+
+        // Spawn new shape 
+        return getNewShape()
     }
 
-    const placeShape = (board: number[][], shape: IShapePosition, opts: IPlaceShapeOptions = {}): number[][] => {
-        const shapesToClean: IShapePosition[] | undefined = opts.shapesToClean
-        const spawnNewShape: boolean | undefined = opts.spawnNewShape
-        const lockedShape: boolean | undefined = opts.lockShape
-
-        let updatedBoard: number[][] = structuredClone(board)
-
-        if (shapesToClean && shapesToClean.length > 0) {
-            shapesToClean.forEach((shapeToClean) => {
-                updatedBoard = updateBoard(updatedBoard, shapeToClean, {cleanUp: true, updateImmediately: false})
-            })
-        }
-
-        if (lockedShape) {
-            // checking for game over
-            if (validatePlacement(shape, updatedBoard)) {
-                updatedBoard = updateBoard(updatedBoard, shape, {cleanUp: false, updateImmediately: true})
-            } else {
-                setGameOver(true)
-                resetScore()
-                return updatedBoard
-            }
-
-            // checking for line clears
-            let lineClears = 0
-            for (const row of updatedBoard) {
-                if (row.every((value) => value !== 0)) {
-                    const rowToClear = updatedBoard.indexOf(row)
-                    updatedBoard.splice(rowToClear, 1)
-                    updatedBoard.unshift(new Array(COL_COUNT).fill(0))
-                    lineClears += 1
-                }
-            }
-            updateScoreByLineClear(lineClears, false)
-        } else {
-            updatedBoard = updateBoard(updatedBoard, shape, {cleanUp: false, updateImmediately: true})
-        }
-
-        if (spawnNewShape) {
-            const newShape = getNewShape()
-            updatedBoard = updateBoard(updatedBoard, newShape, {cleanUp: false, updateImmediately: true})
-        }
-
-        return updatedBoard
+    const move = (x: number, y: number) => {
+        moveShapeInBoard(x, y)
     }
-
-    const hardDrop = () => {
-        const currentBoard = structuredClone(board)
-        const currentShape = structuredClone(shape)
-
-        const newMovePos = {x: 0, y: 0}
-        while (validateMove(newMovePos)) {
-            newMovePos.y++
-        }
-
-        const updatedShape = {...currentShape, position: {
-            x: newMovePos.x + currentShape.position.x,
-            y: currentShape.position.y + newMovePos.y - 1
-        }}
-        
-        placeShape(currentBoard, updatedShape, {shapesToClean: [currentShape], spawnNewShape: true, lockShape: true})
+    const rotate = (ccw: boolean) => {
+        rotateShapeInBoard(ccw)
     }
+    useKey(move, "ArrowLeft", [-1, 0])
+    useKey(move, "ArrowRight", [1, 0])
+    useKey(move, "ArrowDown", [0, 1])
+    useKey(hardDrop, " ")
+    useKey(rotate, "s", [true])
+    useKey(rotate, "f", [false])
+    useKey(move, "l", [-1, 0])
+    useKey(move, "'", [1, 0])
+    useKey(move, ";", [0, 1])
+    useKey(hardDrop, "p")
+
+    // TODO Will reenable this when we have a proper game over screen. For now, restart your browser :)
+    // useEffect(() => {
+    //     if (gameOverFlag) {
+    //         const newBoard = createEmptyBoard(ROW_COUNT, COL_COUNT)
+    //         placeShape(newBoard, resetShape())
+    //         setGameOver(false)
+    //     }
+    // }, [gameOverFlag])
 
     // in game timer (piece gravity)
     const gravityLoop = useCallback(() => {
         // check if the shape can still move down
         if (!gameOverFlag) {
-            if (tryMove(0, 1)) {
+            if (validateShapePlacement(moveShape(0, 1, false), board)) {
+                moveShape(0, 1)
                 console.log("move down")
             } else {
-                placeShape(board, shape, {spawnNewShape: true, lockShape: true})
+                lockShape()
             }
         }
 
-    }, [tryMove, getNewShape, gameOverFlag])
-
-    useKey(tryMove, "ArrowLeft", [-1, 0])
-    useKey(tryMove, "ArrowRight", [1, 0])
-    useKey(tryMove, "ArrowDown", [0, 1])
-    useKey(tryMove, "ArrowUp", [0, -1])
-    useKey(hardDrop, " ")
-    useKey(tryRotate, "s", [true])
-    useKey(tryRotate, "f", [false])
-    useKey(tryMove, "l", [-1, 0])
-    useKey(tryMove, "'", [1, 0])
-    useKey(tryMove, ";", [0, 1])
-    useKey(hardDrop, "p")
-
-    useEffect(() => {
-        if (gameOverFlag) {
-            const newBoard = createEmptyBoard(ROW_COUNT, COL_COUNT)
-            placeShape(newBoard, resetShape())
-            setGameOver(false)
-        }
-    }, [gameOverFlag])
+    }, [validateShapePlacement, lockShape, moveShape])
 
     useLoop(gravityLoop, 600)
 
@@ -285,20 +183,16 @@ export const useBoard = (gameId: number) => {
             const currentBoard = structuredClone(board)
             const currentShape = structuredClone(shape)
 
-            const newMovePos = {x: 0, y: 0}
-            while (validateMove(newMovePos)) {
-                newMovePos.y++
+            const newShape = structuredClone(currentShape)
+            while (validateShapePlacement(newShape, currentBoard)) {
+                newShape.position.y++
             }
-
-            const updatedShape = {...currentShape, position: {
-                x: newMovePos.x + currentShape.position.x,
-                y: currentShape.position.y + newMovePos.y - 1
-            }}
+            // move the shape back up one row since that last execution of the while loop will have failed
+            newShape.position.y--
             
-            setGhostShape(updatedShape)
+            setGhostShape(newShape)
         }
-
     }, [board, shape])
 
-    return [board, gameOverFlag, score, combo, backToBack, ghostShape] as const
+    return [board, shape, gameOverFlag, score, combo, backToBack, ghostShape] as const
 }
